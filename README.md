@@ -1,5 +1,5 @@
-# Discord Modmail
-A Feature Rich [Discord.js](https://github.com/discordjs/discord.js) Modmail Bot, Highly Inspired By Other Modmail Bots.
+# Logs Viewer
+**A modmail logs viewer for [BotStudios/modmailbot](https://github.com/BotStudios/modmailbot)**
 
 ## About
 - ✨ **Customizable** - Prefix, bot status, log channel, .etc
