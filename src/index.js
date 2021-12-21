@@ -22,7 +22,7 @@ app.get('/', async (req, res) => {
     console.log(await database.find({}))
     res.send("OK")
 })
-app.get('/:id/raw', async (req,res) => {
+app.get('/:id/raw', oAuth2.verify(config, settings), async (req,res) => {
     const data = await database.findOne({ Id: req.params.id });
     if(!data)return res.json({ message: 'This log does not exist.' });
     res.json({
@@ -53,7 +53,7 @@ app.get('/:id', oAuth2.verify(config, settings), async (req,res) => {
 }
 
     })
-    res.render('log', { content });
+    res.render('log', { content, auth: config?.oAuth2 == true ? true : false });
 })
 
 
