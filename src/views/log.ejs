@@ -7,6 +7,7 @@
     <title>Document</title>
 </head>
 <body>
+  <%- include("_buttons.ejs", { auth: locals.auth }) %>
   <%- locals.content %>
 </body>
 <script>
