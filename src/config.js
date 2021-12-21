@@ -1,20 +1,9 @@
 module.exports = {
     databaseURI: '',
     port: 3000,
-    token: '',
-    guildID: '',
-    category: '',
-    roleID: '',
-    activity: '',
-    prefix: '',  
-    logThreads: true,
-    notifyMsg: '',
-    webhookURI: '',
+    clientId: '',
+    clientSecret: '',
     logsURI: '',
-    colors: { 
-        success: '',
-        error: '',
-        primary: '',
-        custom: ''
-    }
+    webhookURI: '',
+    oAuth2: false
 }
