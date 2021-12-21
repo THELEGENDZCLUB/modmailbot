@@ -3,25 +3,22 @@ const app = express();
 const config = require('./config');
 const path = require('path');
 const mongoose = require('mongoose');
-var database;
-module.exports = (db) => database = db;
-if(!database) {
-    (async () => {
-    try {
-    await mongoose.connect(config.databaseURI, { useUnifiedTopology: true, useNewUrlParser: true });
-    database = mongoose.model("modmail_logs", new mongoose.Schema({ Id: String, Channel: String, User: String, Timestamp: Number, Messages: Array }));
-    }catch(e) {
-        console.log(e)
-    }
+const oAuth2 = require('./oauth');
+
+(async () => {
+await mongoose.connect(config.databaseURI, { useUnifiedTopology: true, useNewUrlParser: true });
 })();
-}
+const database = mongoose.model("modmail_logs", new mongoose.Schema({ Id: String, Channel: String, User: String, Timestamp: Number, Messages: Array }));
+const settings = mongoose.model("modmail_settings", new mongoose.Schema({ tags: Object, blocked: Array, logViewers: Array }));
+oAuth2.setup(app, config);
+
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.enable('trust proxy'); 
 app.set('views', path.join(__dirname, 'views'));
 
-app.get('/', async (req, res) => {
+app.get('/', async (req, res) => { 
     console.log(await database.find({}))
     res.send("OK")
 })
@@ -35,8 +32,7 @@ app.get('/:id/raw', async (req,res) => {
        Messages: data.Messages
     });
 })
-
-app.get('/:id', async (req,res) => {
+app.get('/:id', oAuth2.verify(config, settings), async (req,res) => {
     const data = await database.findOne({ Id: req.params.id });
     if(!data)return res.json({ message: 'This log does not exist.' });
     var content = '';
@@ -59,4 +55,6 @@ app.get('/:id', async (req,res) => {
     })
     res.render('log', { content });
 })
+
+
 app.listen(config?.port);   
