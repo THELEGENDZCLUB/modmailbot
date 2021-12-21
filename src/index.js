@@ -10,8 +10,8 @@ await mongoose.connect(config.databaseURI, { useUnifiedTopology: true, useNewUrl
 })();
 const database = mongoose.model("modmail_logs", new mongoose.Schema({ Id: String, Channel: String, User: String, Timestamp: Number, Messages: Array }));
 const settings = mongoose.model("modmail_settings", new mongoose.Schema({ tags: Object, blocked: Array, logViewers: Array }));
-oAuth2.setup(app, config);
 
+if(config?.oAuth2) oAuth2.setup(app, config);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
@@ -19,6 +19,7 @@ app.enable('trust proxy');
 app.set('views', path.join(__dirname, 'views'));
 
 app.get('/', async (req, res) => { 
+    console.log(await database.find({}))
     res.send("OK")
 })
 app.get('/:id/raw', async (req,res) => {
