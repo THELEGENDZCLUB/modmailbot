@@ -19,7 +19,6 @@ app.enable('trust proxy');
 app.set('views', path.join(__dirname, 'views'));
 
 app.get('/', async (req, res) => { 
-    console.log(await database.find({}))
     res.send("OK")
 })
 app.get('/:id/raw', async (req,res) => {
