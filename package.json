@@ -1,25 +1,17 @@
 {
-  "name": "modmailbot",
+  "name": "log-viewer",
   "version": "1.0.0",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/BotStudios/modmailbot.git"
-  },
+  "keywords": [],
   "author": "Chee Yong <tojoeleeofficial@gmail.com>",
   "license": "SEE LICENSE IN .LICENSE",
-  "bugs": {
-    "url": "https://github.com/BotStudios/modmailbot/issues"
-  },
-  "homepage": "https://github.com/BotStudios/modmailbot#readme",
   "dependencies": {
-    "discord.js": "^13.3.1",
     "ejs": "^3.1.6",
-    "express": "^4.17.1",
-    "lodash": "^4.17.21",
-    "mongoose": "^6.1.1"
+    "express": "^4.17.2",
+    "mongoose": "^6.1.2"
   }
 }
