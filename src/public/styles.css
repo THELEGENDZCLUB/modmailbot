@@ -91,6 +91,7 @@ strong {
     background: none;
     color: white;
     border-radius: .25rem;
+    border: 1px solid white;
     padding: .25rem .5rem;
     transition: background-color 200ms ease-in-out;
     display: inline-block;
