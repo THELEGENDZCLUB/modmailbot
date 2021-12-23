@@ -4,6 +4,7 @@ const config = require('./config');
 const path = require('path');
 const mongoose = require('mongoose');
 const oAuth2 = require('./oauth');
+const helmet = require('helmet');
 
 (async () => {
 await mongoose.connect(config.databaseURI, { useUnifiedTopology: true, useNewUrlParser: true });
@@ -16,11 +17,11 @@ if(config?.oAuth2) oAuth2.setup(app, config);
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.enable('trust proxy'); 
+app.use(helmet());
 app.set('views', path.join(__dirname, 'views'));
 
 app.get('/', async (req, res) => { 
-    console.log(await database.find({}))
-    res.send("OK")
+    res.render('home', { auth: req.isAuthenticated() == true ? true : false });
 })
 app.get('/:id/raw', oAuth2.verify(config, settings), async (req,res) => {
     const data = await database.findOne({ Id: req.params.id });
@@ -56,5 +57,7 @@ app.get('/:id', oAuth2.verify(config, settings), async (req,res) => {
     res.render('log', { content, auth: config?.oAuth2 == true ? true : false });
 })
 
-
+app.use((req, res, next) => {
+    res.status(404).redirect('/');
+})
 app.listen(config?.port);   
