@@ -17,11 +17,14 @@ if(config?.oAuth2) oAuth2.setup(app, config);
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.enable('trust proxy'); 
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: false
+}));
 app.set('views', path.join(__dirname, 'views'));
-
+ 
 app.get('/', async (req, res) => { 
-    res.render('home', { auth: req.isAuthenticated() == true ? true : false });
+    console.log(await database.find({}))
+    res.render('home', { auth: config?.oAuth2 && req?.isAuthenticated() == true ? true : false });
 })
 app.get('/:id/raw', oAuth2.verify(config, settings), async (req,res) => {
     const data = await database.findOne({ Id: req.params.id });
@@ -37,25 +40,33 @@ app.get('/:id', oAuth2.verify(config, settings), async (req,res) => {
     const data = await database.findOne({ Id: req.params.id });
     if(!data)return res.json({ message: 'This log does not exist.' });
     var content = '';
+    if(config?.header) content += message('Modmail', 'https://cdn.discordapp.com/embed/avatars/0.png', null, `<b>Log ID:</b> ${data?.Id} <br><b>User ID:</b> ${data?.User}`, 'System');
     data?.Messages?.forEach((e) => {
      for(i in e) {
-      content += `
-      <div class="message-group hide-overflow">
-      <div class="avatar-large" style="background-image: url(${e[i].avatar})"></div>
-      <div class="comment">
-          <div class="message" style="height: 25px;">
-             <strong class="username">${i}</strong>
-                  <span class="timestamp">${e[i].timestamp}</span>
-          </div>
-          ${e[i].content}
-      </div>
-  </div>
-      `
+      content += message(i, e[i].avatar, e[i].timestamp, format(e[i].content), e[i].recipient ? 'Staff' : false)
 }
-
     })
     res.render('log', { content, auth: config?.oAuth2 == true ? true : false });
 })
+
+const format = (content) => {
+    return content
+    .split('<').join('&lt;')
+    .split('>').join('&gt;');
+}
+
+const message = (username, avatar, timestamp, content, tag) => 
+`<div class="message-group hide-overflow">
+<div class="avatar-large" style="background-image: url(${avatar})"></div>
+<div class="comment">
+    <div class="message" style="height: 25px;">
+       <strong class="username">${username}</strong>  
+      ${tag?`<span class="tag">${tag}</span>`:''}
+           ${timestamp ? `<span class="timestamp">${timestamp}</span>` : ''}
+    </div>
+  <pre style="font-family:unset;margin:0">${content}</pre>
+</div>
+</div>`;
 
 app.use((req, res, next) => {
     res.status(404).redirect('/');
