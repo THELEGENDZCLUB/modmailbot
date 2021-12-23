@@ -63,3 +63,13 @@ strong {
 	padding-bottom: 5px;
     color:white;
 }
+
+.tag {
+    background: rgba(46, 204, 112, 0.75);
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 5px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
