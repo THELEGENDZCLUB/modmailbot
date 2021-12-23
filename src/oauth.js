@@ -1,69 +1,72 @@
-const session  = require('express-session')
-, passport = require('passport')
-, Strategy = require('passport-discord')
-, cookieParser = require('cookie-parser')
+const express = require('express');
+const app = express();
+const config = require('./config');
+const path = require('path');
+const mongoose = require('mongoose');
+const oAuth2 = require('./oauth');
+const helmet = require('helmet');
 
-module.exports.setup = (app, config) => {
-passport.serializeUser(function(user, done) {
-    done(null, user);
-  });
-passport.deserializeUser(function(obj, done) {
-    done(null, obj);
-  });
+(async () => {
+await mongoose.connect(config.databaseURI, { useUnifiedTopology: true, useNewUrlParser: true });
+})();
+const database = mongoose.model("modmail_logs", new mongoose.Schema({ Id: String, Channel: String, User: String, Timestamp: Number, Messages: Array }));
+const settings = mongoose.model("modmail_settings", new mongoose.Schema({ tags: Object, blocked: Array, logViewers: Array }));
 
-passport.use(new Strategy({
-    clientID: `${config?.clientId}`,
-    clientSecret: `${config?.clientSecret}`,
-    callbackURL: `${config?.logsURI}/callback`,
-    scope: ['identify'],
-}, function(accessToken, refreshToken, profile, done) {
-    process.nextTick(function() {
-        return done(null, profile);
+if(config?.oAuth2) oAuth2.setup(app, config);
+
+app.use(express.static(path.join(__dirname, 'public')));
+app.set('view engine', 'ejs');
+app.enable('trust proxy'); 
+app.use(helmet({
+    contentSecurityPolicy: false
+}));
+app.set('views', path.join(__dirname, 'views'));
+ 
+app.get('/', async (req, res) => { 
+    console.log(await database.find({}))
+    res.render('home', { auth: config?.oAuth2 && req?.isAuthenticated() == true ? true : false });
+})
+app.get('/:id/raw', oAuth2.verify(config, settings), async (req,res) => {
+    const data = await database.findOne({ Id: req.params.id });
+    if(!data)return res.json({ message: 'This log does not exist.' });
+    res.json({
+       Id: data.Id,
+       User: data.User,
+       Channel: data.Channel,
+       Messages: data.Messages
     });
-}));
+})
+app.get('/:id', oAuth2.verify(config, settings), async (req,res) => {
+    const data = await database.findOne({ Id: req.params.id });
+    if(!data)return res.json({ message: 'This log does not exist.' });
+    var content = '';
+    data?.Messages?.forEach((e) => {
+     for(i in e) {
+      e[i].content = format(e[i].content);
+      content += `
+      <div class="message-group hide-overflow">
+      <div class="avatar-large" style="background-image: url(${e[i].avatar})"></div>
+      <div class="comment">
+          <div class="message" style="height: 25px;">
+             <strong class="username">${i}</strong>  
+                  <span class="timestamp">${e[i].timestamp}</span>
+          </div>
+        <pre style="font-family:unset;margin:0">${e[i].content}</pre>
+      </div>
+  </div>
+      `
+}
+    })
+    res.render('log', { content, auth: config?.oAuth2 == true ? true : false });
+})
 
-app.use(session({
-    secret: `${config?.clientSecret}`,
-    resave: false,
-    saveUninitialized: false
-}));
-app.use(cookieParser());
-app.use(passport.initialize());
-app.use(passport.session());
-
-app.get('/login', (req, res) => {
-    if(req.isAuthenticated()) return res.redirect(`/${req.query.redirect || ''}`);
-    if(req?.query?.redirect) res.cookie('redirect', `${req.query.redirect}`);
-    res.redirect(`https://discord.com/oauth2/authorize?response_type=code&scope=identify&client_id=${config?.clientId}&redirect_uri=${config?.logsURI}/callback`)
-});
-app.get('/logout', (req, res) => {
-    req.logout();
-    res.redirect('/');
-});
-app.get('/callback', passport.authenticate('discord', { failureRedirect: '/' }), function(req, res) { 
-    res.clearCookie('redirect');
-    res.redirect(`/${req?.cookies?.redirect ? `${req?.cookies?.redirect}` : '' }`);
- });
-
+const format = (content) => {
+    return content
+    .split('<').join('&lt;')
+    .split('>').join('&gt;');
 }
 
-module.exports.verify = (config, settings) => {
-   return async (req, res, next) => {
-       if(!config?.oAuth2)return next();
-       if(req.isAuthenticated()) {
-        const data = await settings.findOne({});
-         if(data?.logViewers?.includes(req.user.id)) return next();
-         const content = `<div class="message-group hide-overflow">
-         <div class="avatar-large" style="background-image: url(https://cdn.discordapp.com/embed/avatars/0.png)"></div>
-         <div class="comment">
-             <div class="message" style="height: 25px;">
-                <strong class="username">Modmail </strong> <span class="timestamp">${new Date()}</span>
-             </div>
-            <div style="background-color:#49443c;border-left:3px solid #faa81a;padding:5px;">You can't view the logs <b>${req?.user?.username}</b>, you may request access from admins.</div>
-         </div>
-     </div>`
-         return res.render("log", { content, auth: config?.oAuth2 == true ? true : false });
-       }
-      return res.redirect(`/login?redirect=${req.params.id}`);
-   }
-}
+app.use((req, res, next) => {
+    res.status(404).redirect('/');
+})
+app.listen(config?.port);   
