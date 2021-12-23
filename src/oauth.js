@@ -57,9 +57,9 @@ module.exports.verify = (config, settings) => {
          <div class="avatar-large" style="background-image: url(https://cdn.discordapp.com/embed/avatars/0.png)"></div>
          <div class="comment">
              <div class="message" style="height: 25px;">
-                <strong class="username">Modmail</strong> <span class="timestamp">${new Date()}</span>
+                <strong class="username">Modmail </strong> <span class="timestamp">${new Date()}</span>
              </div>
-            <div style="background-color:#49443c;border-left:3px solid #faa81a;padding:5px;">You can't view the logs, you may request access from admins.</div>
+            <div style="background-color:#49443c;border-left:3px solid #faa81a;padding:5px;">You can't view the logs <b>${req?.user?.username}</b>, you may request access from admins.</div>
          </div>
      </div>`
          return res.render("log", { content, auth: config?.oAuth2 == true ? true : false });
